@@ -1,0 +1,272 @@
+{
+  "info": {
+    "name": "Auto-Labeling Service - Mock Collection",
+    "description": "Mock Postman collection for RexOmni / Florence / Jobs endpoints (import into Postman). Base URL: http://localhost:6996",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Jobs - Get available tasks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:6996/api/jobs/tasks?model=florence",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["api","jobs","tasks"],
+          "query": [
+            { "key": "model", "value": "florence" }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - tasks list",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"tasks\":[\"detection\",\"ocr\",\"keypoint\",\"caption\",\"caption_grounding\"],\"required_inputs\":{\"detection\":[],\"ocr\":[],\"keypoint\":[],\"caption\":[],\"caption_grounding\":[\"text_input\"]}}"
+        }
+      ]
+    },
+    {
+      "name": "Jobs - Create job (upload image)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "task", "type": "text", "value": "detection" },
+            { "key": "model", "type": "text", "value": "rexomni" },
+            { "key": "text_input", "type": "text", "value": "" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/api/jobs",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["api","jobs"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 - job created",
+          "originalRequest": {},
+          "status": "Created",
+          "code": 201,
+          "body": "{\"job_id\":\"job-12345\"}"
+        }
+      ]
+    },
+    {
+      "name": "Jobs - Get job status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:6996/api/jobs/job-12345",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["api","jobs","job-12345"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - job status",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"id\":\"job-12345\",\"status\":\"completed\",\"progress\":100,\"error\":null,\"has_result\":true,\"artifacts\":[\"overlay\",\"mask\"]}"
+        }
+      ]
+    },
+    {
+      "name": "Jobs - Get job result",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:6996/api/jobs/job-12345/result",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["api","jobs","job-12345","result"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - job result",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"job_id\":\"job-12345\",\"task\":\"detection\",\"model\":\"rexomni\",\"annotations\":[{\"label\":\"person\",\"score\":0.98,\"bbox\":[12,34,200,400]}],\"artifacts\":{\"overlay\":\"/api/jobs/job-12345/artifacts/overlay\",\"mask\":\"/api/jobs/job-12345/artifacts/mask\"}}"
+        }
+      ]
+    },
+    {
+      "name": "RexOmni - Detection (stream image + header)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "categories", "type": "text", "value": "person" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/vision/rexomni/detection",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["vision","rexomni","detection"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - image stream (mocked)",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "header": [
+            { "key": "X-Rex-Detections", "value": "[{\"label\":\"person\",\"score\":0.98,\"bbox\":[12,34,200,400]}]" }
+          ],
+          "body": "<binary image stream placeholder - overlay.jpg>"
+        }
+      ]
+    },
+    {
+      "name": "RexOmni - OCR",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "ocr_output_format", "type": "text", "value": "Box" },
+            { "key": "ocr_granularity", "type": "text", "value": "Word Level" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/vision/rexomni/ocr",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["vision","rexomni","ocr"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - OCR results",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"task\":\"OCR\",\"results\":[{\"text\":\"Hello\",\"score\":0.99,\"bbox\":[10,10,60,30]},{\"text\":\"World\",\"score\":0.97,\"bbox\":[70,10,130,30]}]}"
+        }
+      ]
+    },
+    {
+      "name": "RexOmni - Keypoint",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "keypoint_type", "type": "text", "value": "human_pose" },
+            { "key": "categories", "type": "text", "value": "person" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/vision/rexomni/keypoint",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["vision","rexomni","keypoint"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - keypoint results",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"task\":\"Keypoint\",\"results\":[{\"label\":\"person\",\"keypoints\":[{\"name\":\"nose\",\"x\":100,\"y\":120,\"score\":0.98},{\"name\":\"left_eye\",\"x\":90,\"y\":110,\"score\":0.95}]}]}"
+        }
+      ]
+    },
+    {
+      "name": "Florence - Caption",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "visualize", "type": "text", "value": "true" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/vision/florence/caption",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["vision","florence","caption"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - caption result (image stream or JSON)",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "header": [
+            { "key": "X-Florence-Results", "value": "[{\"caption\":\"A person riding a bicycle.\"}]" }
+          ],
+          "body": "<binary image stream placeholder - captioned.png>"
+        }
+      ]
+    },
+    {
+      "name": "Florence - Caption Grounding",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": ["<choose file>"] },
+            { "key": "text_input", "type": "text", "value": "Where is the dog?" },
+            { "key": "visualize", "type": "text", "value": "true" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:6996/vision/florence/caption_grounding",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "6996",
+          "path": ["vision","florence","caption_grounding"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 - grounded caption",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\"results\":[{\"phrase\":\"dog\",\"bbox\":[150,80,280,220],\"score\":0.93}],\"image_bytes\":null}"
+        }
+      ]
+    }
+  ]
+}
