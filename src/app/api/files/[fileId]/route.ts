@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 // In a real application, this would serve actual uploaded files
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
-  const fileId = params.fileId;
+  const { fileId } = await params;
 
   // Create a deterministic but varied SVG placeholder based on fileId
   // This ensures the same fileId always shows the same "image" but different files look different

@@ -7,9 +7,9 @@ export class RealtimeManager {
   private connectionCallbacks = new Set<ConnectionCallback>();
   private reconnectAttempts = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
-  private isConnected = false;
+  private _isConnected = false;
   private rooms = new Set<string>();
-  private sessionId: string;
+  private _sessionId: string;
 
   constructor(config: RealtimeConfig) {
     this.config = {
@@ -18,7 +18,7 @@ export class RealtimeManager {
       enableLogging: false,
       ...config,
     };
-    this.sessionId = this.generateSessionId();
+    this._sessionId = this.generateSessionId();
   }
 
   private generateSessionId(): string {
@@ -44,13 +44,13 @@ export class RealtimeManager {
 
         this.ws.onopen = () => {
           this.log('Connected');
-          this.isConnected = true;
+          this._isConnected = true;
           this.reconnectAttempts = 0;
 
           // Send authentication/session info
           this.send({
             type: 'auth',
-            sessionId: this.sessionId,
+            sessionId: this._sessionId,
             rooms: Array.from(this.rooms),
           });
 
@@ -69,7 +69,7 @@ export class RealtimeManager {
 
         this.ws.onclose = (event) => {
           this.log('Disconnected:', event.code, event.reason);
-          this.isConnected = false;
+          this._isConnected = false;
           this.connectionCallbacks.forEach(callback => callback(false));
 
           if (!event.wasClean && this.reconnectAttempts < (this.config.maxReconnectAttempts || 10)) {
@@ -112,20 +112,20 @@ export class RealtimeManager {
       this.ws = null;
     }
 
-    this.isConnected = false;
+    this._isConnected = false;
   }
 
   // Room management (for dataset/file-specific events)
   joinRoom(room: string) {
     this.rooms.add(room);
-    if (this.isConnected) {
+    if (this._isConnected) {
       this.send({ type: 'join_room', room });
     }
   }
 
   leaveRoom(room: string) {
     this.rooms.delete(room);
-    if (this.isConnected) {
+    if (this._isConnected) {
       this.send({ type: 'leave_room', room });
     }
   }
@@ -199,16 +199,16 @@ export class RealtimeManager {
       eventType,
       payload,
       room,
-      sessionId: this.sessionId,
+      sessionId: this._sessionId,
     });
   }
 
   // Getters
   get isConnected(): boolean {
-    return this.isConnected;
+    return this._isConnected;
   }
 
   get sessionId(): string {
-    return this.sessionId;
+    return this._sessionId;
   }
 }

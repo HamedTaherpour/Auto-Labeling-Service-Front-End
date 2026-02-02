@@ -55,11 +55,21 @@ export function AnnotationEditor({
   const [selectedModel, setSelectedModel] = useState<Model | undefined>();
 
   // Smart trigger AI inference
-  const { runSmartTrigger, inferenceResults } = useAIInference({
+  const { runSmartTrigger, runInferenceAsync, inferenceResults } = useAIInference({
     onSuccess: (results) => {
       // Display AI predictions as overlays
       if (canvasRef.current) {
-        canvasRef.current.addAIPredictions(results);
+        // Transform InferenceResult[] to PredictionShape[]
+        const predictions = results
+          .filter(result => 'bbox' in result || 'polygon' in result) // Only show results with visual data
+          .map(result => ({
+            bbox: 'bbox' in result ? result.bbox : undefined,
+            polygon: 'polygon' in result ? result.polygon?.points : undefined, // Extract points array from Polygon
+            label: 'label' in result ? result.label : undefined,
+            score: 'score' in result ? result.score : undefined,
+            text: 'text' in result ? result.text : undefined,
+          }));
+        canvasRef.current.addAIPredictions(predictions);
       }
     },
   });
@@ -196,7 +206,27 @@ export function AnnotationEditor({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [annotationClasses]);
 
-  const handleToolChange = (tool: "select" | "bbox" | "polygon" | "ai") => {
+  const handleAIAutoAnnotate = async () => {
+    if (!imageUrl || !selectedModel) return;
+
+    try {
+      // Convert image URL to File for AI inference
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'current-image.jpg', { type: 'image/jpeg' });
+
+      // Run AI inference on the entire image using detection task
+      await runInferenceAsync({
+        file,
+        task: 'detection',
+        model: selectedModel.name as 'rexomni' | 'florence',
+      });
+    } catch (error) {
+      console.error('Failed to run AI auto-annotation:', error);
+    }
+  };
+
+  const handleToolChange = (tool: "select" | "bbox" | "polygon" | "ai" | "comment") => {
     setSelectedTool(tool);
     setIsDrawing(false);
 
@@ -253,6 +283,7 @@ export function AnnotationEditor({
 
   const handleCommentAdd = (position: { x: number; y: number }, content: string, mentions: string[]) => {
     addComment({
+      annotationId: "canvas", // Canvas comments are not tied to specific annotations
       fileId,
       authorId: "current-user",
       authorName: "Current User",
@@ -287,7 +318,6 @@ export function AnnotationEditor({
             imageUrl={imageUrl}
             onShapeCreated={handleShapeCreated}
             onCanvasClick={selectedTool === 'ai' ? handleCanvasClick : undefined}
-            showAIPredictions={true}
             predictionOpacity={0.7}
             className="shadow-2xl"
           />
@@ -295,7 +325,7 @@ export function AnnotationEditor({
           {/* Comment on Canvas */}
           <CommentOnCanvas
             isActive={selectedTool === 'comment'}
-            canvasRef={canvasElementRef}
+            canvasRef={canvasElementRef as React.RefObject<HTMLElement>}
             onCommentAdd={handleCommentAdd}
             commentThreads={commentThreads}
             onCommentEdit={updateComment}

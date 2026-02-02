@@ -121,11 +121,12 @@ export const updateProperty = async (propertyId: string, updates: UpdateProperty
   for (const datasetId in MOCK_PROPERTIES) {
     const propertyIndex = MOCK_PROPERTIES[datasetId].findIndex(p => p.id === propertyId);
     if (propertyIndex !== -1) {
-      const updatedProperty = {
-        ...MOCK_PROPERTIES[datasetId][propertyIndex],
+      const existingProperty = MOCK_PROPERTIES[datasetId][propertyIndex];
+      const updatedProperty: PropertySchema = {
+        ...existingProperty,
         ...updates,
         updatedAt: new Date().toISOString(),
-      };
+      } as PropertySchema;
       MOCK_PROPERTIES[datasetId][propertyIndex] = updatedProperty;
       return updatedProperty;
     }

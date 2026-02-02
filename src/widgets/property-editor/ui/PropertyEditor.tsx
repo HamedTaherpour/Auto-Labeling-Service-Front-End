@@ -90,7 +90,7 @@ export const PropertyEditor: React.FC<PropertyEditorProps> = ({
         value,
       }));
 
-      const updatedItemProperties = await updateItemProperties(propertyId, itemId, propertyValues);
+      const updatedItemProperties = await updateItemProperties(datasetId, itemId, propertyValues);
       setItemProperties(updatedItemProperties);
       onPropertiesChange?.(updatedItemProperties);
 
@@ -181,7 +181,7 @@ export const PropertyEditor: React.FC<PropertyEditorProps> = ({
             {property.name}
             {property.required && <span className="text-red-500 ml-1">*</span>}
           </FormLabel>
-          <Select onValueChange={field.onChange} value={field.value || ''}>
+          <Select onValueChange={field.onChange} value={typeof field.value === 'string' ? field.value : ''}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder={`Select ${property.name.toLowerCase()}...`} />
